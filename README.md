@@ -226,3 +226,5 @@ Any PR, issue, comments are very welcomed, and I hope this project will generate
 3. Reducing the WASM size, as some symboles are not used, but I don't know why I can't strip them using optimizations.
 4. Explorating work using `workers` on the web + `SharedArrayBuffer` support enable to support `pthread` in the browser.
 5. Check if it's interesting to call the argon2 unmodified functions when `secret` and `associated data` are null.
+6. Optimize the WASM fetching... For now, it's fetched anytime it is instanciated.. Need an internal cache system. Instead of using `instantiateStreaming`,
+   we can use `instantiate` and cache the buffer. But is it safe? is it ok? Of it's better to cache the module itself?
