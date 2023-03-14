@@ -1,0 +1,25 @@
+﻿.pass {
+    color: green;
+}
+
+.fail {
+    color: red;
+    font-weight: bold;
+}
+
+.main {
+    display: grid;
+    width: 400px;
+    grid-template-areas: "loader identifier";
+    grid-template-columns: 50px 350px;
+}
+
+.loader {
+    width: 20px;
+    height: 20px;
+    grid-area: loader;
+}
+
+.identifier {
+    grid-area: identifier;
+}

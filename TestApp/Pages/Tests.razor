@@ -1,0 +1,119 @@
+﻿@page "/blazor-tests"
+
+@using Glihm.Cryptography.Argon2.Wasm
+
+@inject Argon2Wasm _argon2
+
+<PageTitle>Blazor tests</PageTitle>
+
+
+@code {
+
+    /// <inheritdoc/>
+    protected override async Task
+    OnParametersSetAsync()
+    {
+        await this.Argon2idTest();
+        await this.Argon2idSecretAdTest();
+        await this.Argon2iTest();
+
+        Console.WriteLine("** done **");
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <returns></returns>
+    private async ValueTask
+    Argon2idTest()
+    {
+        Argon2Parameters prs = new()
+        {
+            Memory = 64,
+            Iterations = 2,
+            Parallelism = 4,
+            HashLength = 32,
+            Type = Argon2Type.id
+        };
+
+        Argon2HashResult hr = await this._argon2.Hash("password", "somesalt", prs);
+        if (hr.Argon2Code != 0)
+        {
+            Console.Error.WriteLine($"Argon2 error: {hr}");
+            return;
+        }
+
+        Argon2VerifyResult vr = await this._argon2.Verify(hr.EncodedHash, "password", Argon2Type.id);
+        if (vr.Argon2Code != 0)
+        {
+            Console.Error.WriteLine($"Argon2 error: {vr}");
+            return;
+        }
+    }
+
+    /// <summary>
+    ///
+    /// </summary>
+    /// <returns></returns>
+    private async ValueTask
+    Argon2idSecretAdTest()
+    {
+        Argon2Parameters prs = new()
+            {
+                Memory = 64,
+                Iterations = 1,
+                Parallelism = 1,
+                HashLength = 64,
+                Type = Argon2Type.id
+            };
+
+        Argon2HashResult hr = await this._argon2.Hash("password", "somesalt", prs, "secret1234", "associatedDataToPass");
+        if (hr.Argon2Code != 0)
+        {
+            Console.Error.WriteLine($"Argon2 error: {hr}");
+            return;
+        }
+
+        Argon2VerifyResult vr = await this._argon2.Verify(hr.EncodedHash, "password", Argon2Type.id, "secret1234", "associatedDataToPass");
+        if (vr.Argon2Code != 0)
+        {
+            Console.Error.WriteLine($"Argon2 error: {vr}");
+            return;
+        }
+    }
+
+    /// <summary>
+    ///
+    /// </summary>
+    /// <returns></returns>
+    private async ValueTask
+    Argon2iTest()
+    {
+        Argon2Parameters prs = new()
+            {
+                Memory = 64,
+                Iterations = 4,
+                Parallelism = 4,
+                HashLength = 16,
+                Type = Argon2Type.i
+            };
+
+        byte[] pwd = System.Text.Encoding.ASCII.GetBytes("superpass");
+        byte[] salt = System.Text.Encoding.ASCII.GetBytes("123456789");
+        Argon2HashResult hr = await this._argon2.Hash(pwd, salt, prs);
+        if (hr.Argon2Code != 0)
+        {
+            Console.Error.WriteLine($"Argon2 error: {hr}");
+            return;
+        }
+
+        Argon2VerifyResult vr = await this._argon2.Verify(hr.EncodedHash, pwd, Argon2Type.i);
+        if (vr.Argon2Code != 0)
+        {
+            Console.Error.WriteLine($"Argon2 error: {vr}");
+            return;
+        }
+    }
+
+
+}

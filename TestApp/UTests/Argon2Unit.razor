@@ -1,0 +1,170 @@
+﻿@using Glihm.Cryptography.Argon2.Wasm
+
+@inject Argon2Wasm _argon2
+
+<div class="main @this.DefineResultCssClass()">
+
+    @if (this._isLoading)
+    {
+        <div class="spinner-border loader"
+        role="status">
+            <span class="sr-only"></span>
+        </div>
+    }
+
+    <p class="identifier">@this._identifier</p>
+</div>
+
+@code {
+
+    [Parameter]
+    public int Iterations { get; set; }
+
+    [Parameter]
+    public int Memory { get; set; }
+
+    [Parameter]
+    public int Parallelism { get; set; }
+
+    [Parameter]
+    public string Password { get; set; }
+
+    [Parameter]
+    public string Salt { get; set; }
+
+    [Parameter]
+    public string HexOut { get; set; }
+
+    [Parameter]
+    public string? EncodedOut { get; set; }
+
+    [Parameter]
+    public int HashLen { get; set; }
+
+    [Parameter]
+    public Argon2Version Version { get; set; }
+
+    [Parameter]
+    public Argon2Type Type { get; set; }
+
+    [Parameter]
+    public string? Secret { get; set; }
+
+    [Parameter]
+    public string? AssociatedData { get; set; }
+
+    [Parameter]
+    public bool AreInputsB64Buffers { get; set; }
+
+    private bool? _hasPassed;
+    private bool _isLoading;
+    private string _identifier;
+
+    /// <summary>
+    /// Ctor.
+    /// </summary>
+    public Argon2Unit()
+    {
+        this.Password = string.Empty;
+        this.Salt = string.Empty;
+        this.HexOut = string.Empty;
+        this._identifier = string.Empty;
+
+        this.HashLen = 32;
+        this.Version = Argon2Version.v19;
+    }
+
+    /// <inheritdoc/>
+    protected override async Task
+    OnParametersSetAsync()
+    {
+        this._isLoading = true;
+        this.StateHasChanged();
+
+        this._identifier = $"$argon2{this.Type}$v={this.Version}$m={this.Memory},t={this.Iterations},p={this.Parallelism}";
+
+        this._hasPassed = await this.HashTest();
+
+        this._isLoading = false;
+        this.StateHasChanged();
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <returns></returns>
+    private string
+    DefineResultCssClass()
+    {
+        if (this._hasPassed is null)
+        {
+            return string.Empty;
+        }
+
+        return this._hasPassed.Value ? "pass" : "fail";
+    }
+
+    /// <summary>
+    /// Internal unit testing function from Argon2 refrence implementation
+    /// <see href="https://github.com/P-H-C/phc-winner-argon2/blob/master/src/test.c">test suite</see>.
+    /// </summary>
+    /// <returns></returns>
+    private async Task<bool>
+    HashTest()
+    {
+        Argon2Parameters prs = new()
+        {
+            Iterations = this.Iterations,
+            Memory = this.Memory,
+            Parallelism = this.Parallelism,
+            HashLength = this.HashLen,
+            Type = this.Type,
+        };
+
+        Argon2HashResult r;
+
+        if (this.AreInputsB64Buffers)
+        {
+            r = await this._argon2.Hash(
+                Convert.FromBase64String(this.Password),
+                Convert.FromBase64String(this.Salt),
+                prs,
+                secret: String.IsNullOrEmpty(this.Secret) ? null : Convert.FromBase64String(this.Secret),
+                associatedData: String.IsNullOrEmpty(this.AssociatedData) ? null : Convert.FromBase64String(this.AssociatedData));
+        }
+        else
+        {
+            r = await this._argon2.Hash(
+                this.Password,
+                this.Salt,
+                prs,
+                secret: this.Secret,
+                associatedData: this.AssociatedData);
+        }
+
+        if (r.Argon2Code != 0)
+        {
+            Console.WriteLine(r);
+            return false;
+        }
+
+        string hex = BitConverter.ToString(r.Hash).Replace("-", "").ToLower();
+        if (hex != this.HexOut)
+        {
+            Console.WriteLine($"hex failed:\n1.[{hex}]\n2.[{this.HexOut}]");
+            return false;
+        }
+
+        if (this.EncodedOut is not null)
+        {
+            if (r.EncodedHash != this.EncodedOut)
+            {
+                Console.WriteLine($"encoded failed:\n1.[{r.EncodedHash}]\n2.[{this.EncodedOut}]");
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+}
