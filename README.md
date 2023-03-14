@@ -14,8 +14,8 @@ external libraries (like Argon2) into Web Assembly using `clang` without any glu
 
 ## Easy and ready to use with Blazor
 
-After installing the package `Glihm.Cryptography.Argon2.Wasm`, few lines are required
-to get it working:
+After installing the [package](https://www.nuget.org/packages/Glihm.Cryptography.Argon2.Wasm/) from nuget
+`Glihm.Cryptography.Argon2.Wasm`, few lines are required to get it working:
 
 ```csharp
 // program.cs
