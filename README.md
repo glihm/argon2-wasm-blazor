@@ -65,7 +65,7 @@ private async ValueTask<bool>
 Argon2Verify(string encodedHash, string password)
 {
 	Argon2VerifyResult vr = await this._argon2.Verify(
-		hr.EncodedHash,
+		hr.encodedHash,
 		password,
 		Argon2Type.id);
 
